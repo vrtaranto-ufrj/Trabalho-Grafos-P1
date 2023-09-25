@@ -28,8 +28,8 @@ class Graph {
         void bfs( int root );
         void dfs( int root );
         int distance( int root, int destiny );
-        int diameter( unsigned core = 1 );  // Padrão 1 thread
-        int diameter_aprox( int precision = 50 ); // Padrão 50 Bfs
+        int diameter( int cores = -1 );  // Padrão usar todos threads
+        int diameter_aprox( int precision = 50, int cores = -1 ); // Padrão 50 Bfs e usando todos threads
         void write_informations();
 
     private:

@@ -78,7 +78,7 @@ int main( int argc, char *argv[] ) {
                 cout << "Diametro exato ou aproximado? (A/e): ";
                 getline( cin, resp );
                 if ( resp == "E" || resp == "e" ) {
-                    cout << "Quantos threads deseja usar? ";
+                    cout << "Quantos threads deseja usar? (Padrao=Maximo): ";
                     getline( cin, resp );
                     if ( resp == "" ) {
                         cout << "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n";

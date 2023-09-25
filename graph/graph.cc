@@ -672,7 +672,7 @@ int Graph::bfs_list_parallel( int root ) {
     return local_max;
 }
 
-int Graph::diameter( unsigned cores ) {
+int Graph::diameter( int cores ) {
     // Método para calcular o diâmetro do grafo
     // Argumentos:
     //     cores: inteiro com o número de threads a serem utilizadas
@@ -682,8 +682,9 @@ int Graph::diameter( unsigned cores ) {
 
     int max_diameter = -1;
 
-    // Define o número de threads baseado em sua CPU (4 núcleos, hyper-threading)
-    omp_set_num_threads( cores );
+    // Define o número de threads baseado em sua CPU
+    if ( cores != -1) 
+        omp_set_num_threads( cores );
 
     switch (type_representation) {
     case 'M':
@@ -717,35 +718,58 @@ int Graph::diameter( unsigned cores ) {
     return max_diameter;
 }
 
-int Graph::diameter_aprox( int precision ) {
+int Graph::diameter_aprox( int precision, int cores ) {
     // Método para calcular o diâmetro do grafo de forma aproximada
     // Argumentos:
     //     precision: inteiro com o número de vezes que o algoritmo será executado
+    //     cores: inteiro que definirá o número de cores a ser usado, padrão = todos threads
     // Retorno:
     //     int: inteiro com o diâmetro do grafo
 
+    int num_components = 0;
+    int max_diameter = -1;
+    vector<int>* all_components = connected_components();
+    vector<vector<int>> components;
 
-    int max_diameter = -1, max = -1;
-    vector<int> levels;
+    // Define o número de threads baseado em sua CPU
+    if ( cores != -1) 
+        omp_set_num_threads( cores );
 
     srand( time(nullptr) );
+
+    for ( int i = 0; i < num_vertices; i++ ) {
+        if ( all_components->at(i) > num_components )
+            num_components = all_components->at(i);
+    }
+
+    components.resize( num_components );
+
+    // Criando um vector em que seus elementos sejam cada conjunto conexo do grafo
+    for ( int i = 0; i < num_vertices; i++ ) {
+        components[(*all_components)[i] - 1].push_back( i );
+    }
+
     switch ( type_representation ) {
-    case 'M':
-        for ( int i = 0; i < precision; i++ ) {
-            vertices = vector<int>( num_vertices, 0 );
-            bfs_matrix( rand() % num_vertices );
-            if ( max > max_diameter ) {
-                max_diameter = max;
+    case 'M': 
+        for ( auto c : components ) {
+            #pragma omp parallel for reduction( max: max_diameter )
+            for ( int i = 0; i < precision; i++ ) {
+                int local_diameter = bfs_matrix_parallel( rand() % c.size() );
+                if ( local_diameter > max_diameter ) {
+                max_diameter = local_diameter;
+            }
             }
         }
         break;
 
     case 'L':
-        for ( int i = 0; i < precision; i++ ) {
-            vertices = vector<int>( num_vertices, 0 );
-            bfs_list( rand() % num_vertices );
-            if ( max > max_diameter ) {
-                max_diameter = max;
+        for ( auto c : components ) {
+            #pragma omp parallel for reduction( max: max_diameter )
+            for ( int i = 0; i < precision; i++ ) {
+                int local_diameter = bfs_list_parallel( rand() % c.size() );
+                if ( local_diameter > max_diameter ) {
+                max_diameter = local_diameter;
+            }
             }
         }
         break;
